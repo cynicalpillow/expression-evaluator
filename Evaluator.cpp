@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-int OPERATORS = 5;
+const int OPERATORS = 15;
 int EVALUATION_ERROR = 0;
 
 //Tokenizing
@@ -9,7 +9,7 @@ string original_expression;
 vector<string> tokens;
 
 //Operators and precedence values
-string operators[5] = {"+", "-", "*", "^", "/"};
+string operators[OPERATORS] = {"+", "-", "*", "/", "^", "sin", "cos", "tan", "ln", "log", "log10", "log2", "exp", "exp2", "sqrt"};
 map<string, int> precedences;
 map<string, int> associativity;
 
@@ -23,8 +23,10 @@ stack<string> operand_stack;
 string remove_spaces(){
 	int n = original_expression.length();
 	string ret = "";
-	for(int i = 0; i < n; i++)
-		if(original_expression[i] != ' ')ret += original_expression[i];
+	for(int i = 0; i < n; i++){
+		if(original_expression[i] >= 'A' && original_expression[i] <= 'Z')ret += tolower(original_expression[i]);
+		else if(original_expression[i] != ' ')ret += original_expression[i];
+	}
 	return ret;
 }
 
@@ -41,7 +43,9 @@ void tokenize(){
 			right = i;
 			update = false;
 		}
-		if(isdigit(original_expression[i]) || original_expression[i] == '.'){
+		if(isdigit(original_expression[i]) 
+			|| original_expression[i] == '.' 
+			|| (original_expression[i] >= 'a' && original_expression[i] <= 'z')){
 			right++;
 		} else {
 			if(left != right)tokens.push_back(original_expression.substr(left, right-left)); //Don't add an empty string, otherwise add the number
@@ -53,19 +57,19 @@ void tokenize(){
 }
 
 void initialize_operator_precedence(){
-	precedences["+"] = 2;
-	precedences["-"] = 2;
-	precedences["*"] = 3;
-	precedences["/"] = 3;
-	precedences["^"] = 4;
+	for(int i = 0; i < OPERATORS; i++){
+		if(i < 2)precedences[operators[i]] = 2;
+		else if(i < 4)precedences[operators[i]] = 3;
+		else if(i < 5)precedences[operators[i]] = 4;
+		else precedences[operators[i]] = 5;
+	}
 }
 
 void initialize_operator_associativity(){
-	associativity["+"] = 1;
-	associativity["-"] = 1;
-	associativity["*"] = 1;
-	associativity["/"] = 1;
-	associativity["^"] = 0;
+	for(int i = 0; i < OPERATORS; i++){
+		if(i != 4)associativity[operators[i]] = 1;
+		else associativity[operators[i]] = 0;
+	}
 }
 
 //Check if the current token is a operator
@@ -126,9 +130,44 @@ double get_value(double operand1, double operand2, string op){
 	}
 }
 
+double get_value(double operand1, string op){
+	if(op == "sin"){
+		return sin(operand1);
+	} else if(op == "cos"){
+		return cos(operand1);
+	} else if(op == "tan"){
+		return tan(operand1);
+	} else if(op == "log" || op == "ln"){
+		return log(operand1);
+	} else if(op == "log10"){
+		return log10(operand1);
+	} else if(op == "log2"){
+		return log2(operand1);
+	} else if(op == "exp"){
+		return exp(operand1);
+	} else if(op == "exp2"){
+		return exp2(operand1);
+	} else if(op == "sqrt"){
+		return sqrt(operand1);
+	}
+}
+
+bool is_function_operator(string s){
+	for(int i = 0; i < OPERATORS; i++)
+		if(operators[i] == s && i > 4)return true;
+	return false;
+}
+
 double evaluate(){
 	for(string s : output_queue){
-		if(is_operator(s)){
+		if(is_function_operator(s)){
+			if(operand_stack.size() < 1){
+				EVALUATION_ERROR = 1;
+				return 0;
+			}
+			double operand_1 = atof(operand_stack.top().c_str()); operand_stack.pop();
+			operand_stack.push(to_string(get_value(operand_1, s)));
+		}else if(is_operator(s)){
 			if(operand_stack.size() < 2){
 				EVALUATION_ERROR = 1;
 				return 0;
