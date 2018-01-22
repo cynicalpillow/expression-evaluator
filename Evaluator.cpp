@@ -2,7 +2,6 @@
 using namespace std;
 
 /* TO-DO:
- * implicit multiplication
  * equation solver (?)
  */
 
@@ -103,6 +102,7 @@ int shunting_yard(){
 			operator_stack.push(s);
 			if(s != "!")prev_was_operator = true;
 		} else if(s == "("){
+			if(!prev_was_operator && !unary)operator_stack.push("*");
 			operator_stack.push(s);
 			prev_was_operator = true;
 		} else if(s == ")"){
@@ -185,6 +185,8 @@ bool is_function_unary_operator(string s){
 }
 
 double evaluate(){
+	for(string s : output_queue)
+		cout << s << endl;
 	for(string s : output_queue){
 		if(is_function_unary_operator(s)){
 			if(operand_stack.size() < 1){
