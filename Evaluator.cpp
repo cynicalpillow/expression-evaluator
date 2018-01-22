@@ -1,7 +1,12 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-const int OPERATORS = 15;
+/* TO-DO:
+ * implicit multiplication
+ * equation solver (?)
+ */
+
+const int OPERATORS = 17;
 int EVALUATION_ERROR = 0;
 
 //Tokenizing
@@ -9,7 +14,7 @@ string original_expression;
 vector<string> tokens;
 
 //Operators and precedence values
-string operators[OPERATORS] = {"+", "-", "*", "/", "^", "sin", "cos", "tan", "ln", "log", "log10", "log2", "exp", "exp2", "sqrt"};
+string operators[OPERATORS] = {"+", "-", "*", "/", "^", "sin", "cos", "tan", "ln", "log", "log10", "log2", "exp", "exp2", "sqrt", "-u", "!"};
 map<string, int> precedences;
 map<string, int> associativity;
 
@@ -61,13 +66,14 @@ void initialize_operator_precedence(){
 		if(i < 2)precedences[operators[i]] = 2;
 		else if(i < 4)precedences[operators[i]] = 3;
 		else if(i < 5)precedences[operators[i]] = 4;
+		else if(i == 15)precedences[operators[i]] = 4;
 		else precedences[operators[i]] = 5;
 	}
 }
 
 void initialize_operator_associativity(){
 	for(int i = 0; i < OPERATORS; i++){
-		if(i != 4)associativity[operators[i]] = 1;
+		if(i != 4 && i != 15)associativity[operators[i]] = 1;
 		else associativity[operators[i]] = 0;
 	}
 }
@@ -80,8 +86,14 @@ bool is_operator(string x){
 }
 
 int shunting_yard(){
+	bool beginning = true;
+	bool prev_was_operator = false;
+	bool unary = false;
 	for(string s : tokens){
-		if(is_operator(s)){
+		if(s == "-" && (beginning || prev_was_operator || unary)){
+			unary = true;
+			operator_stack.push("-u");
+		} else if(is_operator(s)){
 			while(operator_stack.size() > 0 && ((precedences[operator_stack.top()] > precedences[s]) 
 				|| (precedences[operator_stack.top()] == precedences[s] && associativity[operator_stack.top()])) 
 				&& operator_stack.top() != "("){
@@ -89,8 +101,10 @@ int shunting_yard(){
 				operator_stack.pop();
 			}
 			operator_stack.push(s);
+			if(s != "!")prev_was_operator = true;
 		} else if(s == "("){
 			operator_stack.push(s);
+			prev_was_operator = true;
 		} else if(s == ")"){
 			while(operator_stack.size() > 0 && operator_stack.top() != "("){
 				output_queue.push_back(operator_stack.top());
@@ -101,9 +115,13 @@ int shunting_yard(){
 				return -1;
 			}
 			operator_stack.pop();
+			prev_was_operator = false;
 		} else {
 			output_queue.push_back(s);
+			prev_was_operator = false;
+			unary = false;
 		}
+		beginning = false;
 	}
 	while(operator_stack.size() > 0){
 		if(operator_stack.top() == "("){
@@ -130,6 +148,10 @@ double get_value(double operand1, double operand2, string op){
 	}
 }
 
+double factorial(double x){
+	return (x <= 1)?1:(x * factorial(x-1));
+}
+
 double get_value(double operand1, string op){
 	if(op == "sin"){
 		return sin(operand1);
@@ -149,10 +171,14 @@ double get_value(double operand1, string op){
 		return exp2(operand1);
 	} else if(op == "sqrt"){
 		return sqrt(operand1);
+	} else if(op == "-u"){
+		return -1*operand1;
+	} else if(op == "!"){
+		return factorial(round(operand1));
 	}
 }
 
-bool is_function_operator(string s){
+bool is_function_unary_operator(string s){
 	for(int i = 0; i < OPERATORS; i++)
 		if(operators[i] == s && i > 4)return true;
 	return false;
@@ -160,7 +186,7 @@ bool is_function_operator(string s){
 
 double evaluate(){
 	for(string s : output_queue){
-		if(is_function_operator(s)){
+		if(is_function_unary_operator(s)){
 			if(operand_stack.size() < 1){
 				EVALUATION_ERROR = 1;
 				return 0;
