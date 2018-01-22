@@ -185,8 +185,6 @@ bool is_function_unary_operator(string s){
 }
 
 double evaluate(){
-	for(string s : output_queue)
-		cout << s << endl;
 	for(string s : output_queue){
 		if(is_function_unary_operator(s)){
 			if(operand_stack.size() < 1){
