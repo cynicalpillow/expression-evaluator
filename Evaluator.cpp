@@ -13,7 +13,7 @@ string original_expression;
 vector<string> tokens;
 
 //Operators and precedence values
-string operators[OPERATORS] = {"+", "-", "*", "i*", "/", "^", "sin", "cos", "tan", "ln", "log", "logb2", "exp", "expb2", "sqrt", "-u", "!"};
+vector<string> operators = {"+", "-", "*", "i*", "/", "^", "sin", "cos", "tan", "ln", "log", "logb2", "exp", "expb2", "sqrt", "-u", "!"};
 map<string, int> precedences;
 map<string, int> associativity;
 
@@ -160,7 +160,6 @@ int shunting_yard(){
 	bool prev_was_operator = false;
 	bool unary = false;
 	for(string s : tokens){
-		cout << s << endl;
 		if(s == "-" && (beginning || prev_was_operator || unary)){ //Unary minus
 			unary = true;
 			operator_stack.push("-u");
