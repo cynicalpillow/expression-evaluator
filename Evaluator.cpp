@@ -13,7 +13,7 @@ string original_expression;
 vector<string> tokens;
 
 //Operators and precedence values
-string operators[OPERATORS] = {"+", "-", "*", "i*", "/", "^", "sin", "cos", "tan", "ln", "log", "log10", "log2", "exp", "exp2", "sqrt", "-u", "!"};
+string operators[OPERATORS] = {"+", "-", "*", "i*", "/", "^", "sin", "cos", "tan", "ln", "log", "logb2", "exp", "expb2", "sqrt", "-u", "!"};
 map<string, int> precedences;
 map<string, int> associativity;
 
@@ -51,8 +51,10 @@ void tokenize(){
 		if(isdigit(original_expression[i]) 
 			|| original_expression[i] == '.' ){
 			if(!digit && i > 0 
-				&& original_expression.substr(left, right-left) != "log"
-				&& original_expression.substr(left, right-left) != "exp"){
+				&& original_expression.substr(left, right-left) != "logb"
+				&& original_expression.substr(left, right-left) != "expb" 
+				|| ((original_expression.substr(left, right-left) == "logb2")
+				|| (original_expression.substr(left, right-left) == "expb2"))){
 				if(left != right)tokens.push_back(original_expression.substr(left, right-left)); //Don't add an empty string, otherwise add the function
 				left = i;
 				right = i+1;
@@ -84,14 +86,14 @@ void initialize_operator_precedence(){
 		if(i < 2)precedences[operators[i]] = 2;
 		else if(i < 5)precedences[operators[i]] = 4;
 		else if(i < 6)precedences[operators[i]] = 5;
-		else if(i == 16)precedences[operators[i]] = 5;
+		else if(i == 15)precedences[operators[i]] = 5;
 		else precedences[operators[i]] = 6;
 	}
 }
 
 void initialize_operator_associativity(){
 	for(int i = 0; i < OPERATORS; i++){
-		if(i != 5 && i != 16)associativity[operators[i]] = 1;
+		if(i != 5 && i != 15)associativity[operators[i]] = 1;
 		else associativity[operators[i]] = 0;
 	}
 }
@@ -128,11 +130,11 @@ double get_value(double operand1, string op){
 		return cos(operand1);
 	} else if(op == "tan"){
 		return tan(operand1);
-	} else if(op == "log" || op == "ln"){
+	} else if(op == "ln"){
 		return log(operand1);
-	} else if(op == "log10"){
+	} else if(op == "log"){
 		return log10(operand1);
-	} else if(op == "log2"){
+	} else if(op == "logb2"){
 		return log2(operand1);
 	} else if(op == "exp"){
 		return exp(operand1);
@@ -158,6 +160,7 @@ int shunting_yard(){
 	bool prev_was_operator = false;
 	bool unary = false;
 	for(string s : tokens){
+		cout << s << endl;
 		if(s == "-" && (beginning || prev_was_operator || unary)){ //Unary minus
 			unary = true;
 			operator_stack.push("-u");
