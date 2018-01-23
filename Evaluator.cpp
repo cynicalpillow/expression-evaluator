@@ -5,7 +5,7 @@ using namespace std;
  * equation solver (?)
  */
 
-const int OPERATORS = 18;
+const int OPERATORS = 17;
 int EVALUATION_ERROR = 0;
 
 //Tokenizing
