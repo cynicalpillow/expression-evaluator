@@ -155,6 +155,15 @@ bool is_function_unary_operator(string s){
 	return false;
 }
 
+void pop_stack(string op){
+	while(operator_stack.size() > 0 && ((precedences[operator_stack.top()] > precedences[op]) 
+		|| (precedences[operator_stack.top()] == precedences[op] && associativity[operator_stack.top()])) 
+		&& operator_stack.top() != "("){
+		output_queue.push_back(operator_stack.top());
+		operator_stack.pop();
+	}
+}
+
 int shunting_yard(){
 	bool beginning = true;
 	bool prev_was_operator = false;
@@ -166,21 +175,11 @@ int shunting_yard(){
 		} else if(is_operator(s)){
 			//implicit multiplication
 			if(is_function_unary_operator(s) && !prev_was_operator && s != "!" && !beginning){
-				while(operator_stack.size() > 0 && ((precedences[operator_stack.top()] > precedences["i*"]) 
-					|| (precedences[operator_stack.top()] == precedences["i*"] && associativity[operator_stack.top()])) 
-					&& operator_stack.top() != "("){
-					output_queue.push_back(operator_stack.top());
-					operator_stack.pop();
-				}
+				pop_stack("i*");
 				operator_stack.push("i*");
 			}
 			//Regular operations and functions
-			while(operator_stack.size() > 0 && ((precedences[operator_stack.top()] > precedences[s]) 
-				|| (precedences[operator_stack.top()] == precedences[s] && associativity[operator_stack.top()])) 
-				&& operator_stack.top() != "("){
-				output_queue.push_back(operator_stack.top());
-				operator_stack.pop();
-			}
+			pop_stack(s);
 			operator_stack.push(s);
 			//Check if factorial
 			if(s == "!")unary = true;
@@ -189,12 +188,7 @@ int shunting_yard(){
 		} else if(s == "("){
 			//implicit multiplication
 			if(!prev_was_operator && !unary && !beginning){
-				while(operator_stack.size() > 0 && ((precedences[operator_stack.top()] > precedences["i*"]) 
-					|| (precedences[operator_stack.top()] == precedences["i*"] && associativity[operator_stack.top()])) 
-					&& operator_stack.top() != "("){
-					output_queue.push_back(operator_stack.top());
-					operator_stack.pop();
-				}
+				pop_stack("i*");
 				operator_stack.push("i*");
 			}
 			operator_stack.push(s);
@@ -232,6 +226,9 @@ int shunting_yard(){
 
 double evaluate(){
 	//Shunting yard algorithm to get expression into post-fix notation
+	tokenize();
+	initialize_operator_precedence();
+	initialize_operator_associativity();
 	int error = shunting_yard();
 	if(error == -1)return nan("");
 	//Evaluate the post-fix expression
@@ -264,9 +261,6 @@ int main(){
 	freopen("input.txt", "r", stdin);
 	//Initialization and tokenizing
 	getline(cin, original_expression);
-	tokenize();
-	initialize_operator_precedence();
-	initialize_operator_associativity();
 	double ans = evaluate();
 	cout << original_expression << " = ";
 	if(EVALUATION_ERROR)cout << "Error in evaluating" << endl;
